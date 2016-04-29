@@ -125,6 +125,7 @@ ngx_stream_init_connection(ngx_connection_t *c)
     }
 
     s->signature = NGX_STREAM_MODULE;
+    s->auth_pass = 0;
     s->main_conf = addr_conf->ctx->main_conf;
     s->srv_conf = addr_conf->ctx->srv_conf;
 

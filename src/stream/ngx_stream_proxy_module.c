@@ -1162,6 +1162,7 @@ ngx_stream_proxy_process(ngx_stream_session_t *s, ngx_uint_t from_upstream,
     ngx_log_handler_pt            handler;
     ngx_stream_upstream_t        *u;
     ngx_stream_proxy_srv_conf_t  *pscf;
+    ngx_stream_core_main_conf_t  *cmcf;
 
     u = s->upstream;
 
@@ -1184,6 +1185,7 @@ ngx_stream_proxy_process(ngx_stream_session_t *s, ngx_uint_t from_upstream,
     }
 
     pscf = ngx_stream_get_module_srv_conf(s, ngx_stream_proxy_module);
+    cmcf = ngx_stream_get_module_main_conf(s, ngx_stream_core_module);
 
     if (from_upstream) {
         src = pc;
@@ -1205,6 +1207,24 @@ ngx_stream_proxy_process(ngx_stream_session_t *s, ngx_uint_t from_upstream,
         if (do_write) {
 
             size = b->last - b->pos;
+            if (!from_upstream) {
+              /* call auth_handler if needed. */
+              if (cmcf->auth_handler && cmcf->auth_handler(s) != NGX_OK) {
+                if (src && src->write->ready) {
+                  n = src->send(src, (u_char*)"AUTH FAILED", 11);
+                }
+                ngx_stream_proxy_finalize(s, NGX_DECLINED);
+                // return NGX_ERROR;
+                return;
+              } else {
+                if (s->auth_pass == 1 && src && src->write->ready) {
+                  s->auth_pass = 2;
+                  n = src->send(src, (u_char*)"AUTH OK", 7);
+                  // return NGX_OK;
+                  return;
+                }
+              }
+            }
 
             if (size && dst && dst->write->ready) {
 

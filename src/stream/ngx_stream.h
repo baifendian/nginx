@@ -122,6 +122,7 @@ typedef struct {
     ngx_array_t             listen;      /* ngx_stream_listen_t */
     ngx_stream_access_pt    limit_conn_handler;
     ngx_stream_access_pt    access_handler;
+    ngx_stream_access_pt    auth_handler;
 } ngx_stream_core_main_conf_t;
 
 
@@ -142,6 +143,7 @@ struct ngx_stream_session_s {
     uint32_t                signature;         /* "STRM" */
 
     ngx_connection_t       *connection;
+    uint32_t                auth_pass;         /* 1 auth check OK; 2 granted*/
 
     off_t                   received;
 
